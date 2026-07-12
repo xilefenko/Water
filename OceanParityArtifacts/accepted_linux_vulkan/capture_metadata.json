@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "captures": {
+    "unity": {
+      "host": "Linux-7.1.3-2-cachyos-x86_64-with-glibc2.43",
+      "git_revision": "e46066ecfb063bfa319c64283bba0b0c79eea1b2",
+      "reference_root": "/mnt/data/GitHub/Water",
+      "unity_version": "2023.2.2f1",
+      "scene_sha256": "7205102633e36b14bee9706c25594b316997c2f468369d87c66e3e63f6e35535",
+      "serialized_camera_fov_degrees": 60.0,
+      "camera_hdr": true,
+      "color_space": "Linear",
+      "graphics_api": "Vulkan",
+      "engine": "Unity 2023.2.2f1",
+      "platform": "LinuxEditor",
+      "graphics_device": "NVIDIA GeForce RTX 5080",
+      "camera_msaa": true,
+      "resolution": [
+        2592,
+        1355
+      ],
+      "camera_position": [
+        2.626,
+        9.626,
+        -18.47
+      ],
+      "camera_rotation_degrees": [
+        10.546,
+        5.873,
+        0
+      ],
+      "vertical_fov_degrees": 75,
+      "near": 0.05,
+      "far": 1000,
+      "backend": "Custom/FFTWaterCompat vertex-fragment Linux compatibility path",
+      "environment_cubemap": "TillDawnSubstituteEnvironment",
+      "environment_deviation": "Original referenced cubemap is absent from the repository; runtime procedural TillDawnSubstituteEnvironment is the accepted substitute",
+      "atmosphere_capture": "final view uses deterministic Atmosphere shader post-process; isolation views retain camera clear color",
+      "non_ocean_meshes_hidden": true,
+      "jacobian_view_semantics": "raw Jacobian retained by parity-only RHalf diagnostic texture before foam accumulation"
+    }
+  }
+}

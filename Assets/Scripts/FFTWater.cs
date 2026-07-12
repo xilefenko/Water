@@ -11,6 +11,11 @@ public class FFTWater : MonoBehaviour {
     public static bool ParitySuppressAutomaticUpdate;
     public static float? ParityFrameTime;
     public static float? ParityDeltaTime;
+    // Linux compatibility backend. "original" keeps the tessellation shader (D3D11 control),
+    // "compat" forces the vertex-displacement shader, null/"auto" picks by graphics API.
+    // Runtime-only: never serialized, so scene values stay untouched.
+    public static string CompatBackendOverride;
+    private bool useCompatBackend;
     public Shader waterShader;
     public ComputeShader fftComputeShader;
 
@@ -244,6 +249,7 @@ public class FFTWater : MonoBehaviour {
 
     private RenderTexture displacementTextures, 
                           slopeTextures, 
+                          jacobianTextures,
                           initialSpectrumTextures, 
                           pingPongTex, 
                           pingPongTex2, 
@@ -262,6 +268,10 @@ public class FFTWater : MonoBehaviour {
         return slopeTextures;
     }
 
+    public RenderTexture GetJacobianMap() {
+        return jacobianTextures;
+    }
+
     public RenderTexture GetInitialSpectrum() {
         return initialSpectrumTextures;
     }
@@ -274,13 +284,33 @@ public class FFTWater : MonoBehaviour {
         return buoyancyDataTex;
     }
 
+    static bool ResolveCompatBackend() {
+        string mode = CompatBackendOverride;
+        if (String.IsNullOrEmpty(mode)) mode = Environment.GetEnvironmentVariable("TILLDAWN_WATER_BACKEND");
+        if (mode == "compat") return true;
+        if (mode == "original") return false;
+        var api = SystemInfo.graphicsDeviceType;
+        return api != UnityEngine.Rendering.GraphicsDeviceType.Direct3D11 &&
+               api != UnityEngine.Rendering.GraphicsDeviceType.Direct3D12;
+    }
+
+    // The compat shader displaces real vertices instead of tessellating on the GPU, so the
+    // CPU mesh must carry the density the tessellator used to add. Runtime-only override.
+    int EffectiveQuadRes() {
+        if (!useCompatBackend) return quadRes;
+        int multiplier = 4;
+        string env = Environment.GetEnvironmentVariable("TILLDAWN_COMPAT_QUADRES_MULT");
+        if (!String.IsNullOrEmpty(env) && int.TryParse(env, out int parsed)) multiplier = Mathf.Clamp(parsed, 1, 32);
+        return Mathf.Clamp(quadRes * multiplier, quadRes, Mathf.Max(quadRes, 2000 / Mathf.Max(1, planeLength)));
+    }
+
     private void CreateWaterPlane() {
         GetComponent<MeshFilter>().mesh = mesh = new Mesh();
         mesh.name = "Water";
         mesh.indexFormat = IndexFormat.UInt32;
 
         float halfLength = planeLength * 0.5f;
-        int sideVertCount = planeLength * quadRes;
+        int sideVertCount = planeLength * EffectiveQuadRes();
 
         vertices = new Vector3[(sideVertCount + 1) * (sideVertCount + 1)];
         Vector2[] uv = new Vector2[vertices.Length];
@@ -318,9 +348,15 @@ public class FFTWater : MonoBehaviour {
     }
 
     void CreateMaterial() {
-        if (waterShader == null) return;
+        Shader shader = waterShader;
+        if (useCompatBackend) {
+            Shader compat = Shader.Find("Custom/FFTWaterCompat");
+            if (compat != null) shader = compat;
+            else Debug.LogWarning("FFTWater: compat backend requested but Custom/FFTWaterCompat not found; using original shader");
+        }
+        if (shader == null) return;
 
-        waterMaterial = new Material(waterShader);
+        waterMaterial = new Material(shader);
 
         MeshRenderer renderer = GetComponent<MeshRenderer>();
 
@@ -420,6 +456,7 @@ public class FFTWater : MonoBehaviour {
 
 
     void OnEnable() {
+        useCompatBackend = ResolveCompatBackend();
         CreateWaterPlane();
         CreateMaterial();
         cam = GameObject.Find("Main Camera").GetComponent<Camera>();
@@ -438,6 +475,8 @@ public class FFTWater : MonoBehaviour {
         displacementTextures = CreateRenderTex(N, N, 4, RenderTextureFormat.ARGBHalf, true);
 
         slopeTextures = CreateRenderTex(N, N, 4, RenderTextureFormat.RGHalf, true);
+
+        jacobianTextures = CreateRenderTex(N, N, 4, RenderTextureFormat.RHalf, true);
 
         spectrumTextures = CreateRenderTex(N, N, 8, RenderTextureFormat.ARGBHalf, true);
 
@@ -528,16 +567,19 @@ public class FFTWater : MonoBehaviour {
         fftComputeShader.SetTexture(5, "_DisplacementTextures", displacementTextures);
         fftComputeShader.SetTexture(5, "_SpectrumTextures", spectrumTextures);
         fftComputeShader.SetTexture(5, "_SlopeTextures", slopeTextures);
+        fftComputeShader.SetTexture(5, "_JacobianTextures", jacobianTextures);
         fftComputeShader.SetTexture(5, "_BuoyancyData", buoyancyDataTex);
         fftComputeShader.Dispatch(5, threadGroupsX, threadGroupsY, 1);
 
         
         displacementTextures.GenerateMips();
         slopeTextures.GenerateMips();
+        jacobianTextures.GenerateMips();
 
 
         waterMaterial.SetTexture("_DisplacementTextures", displacementTextures);
         waterMaterial.SetTexture("_SlopeTextures", slopeTextures);
+        waterMaterial.SetTexture("_JacobianTextures", jacobianTextures);
 
         if (useTextureForFresnel) {
             waterMaterial.SetTexture("_EnvironmentMap", environmentTexture);
@@ -579,6 +621,7 @@ public class FFTWater : MonoBehaviour {
 
         Destroy(displacementTextures);
         Destroy(slopeTextures);
+        Destroy(jacobianTextures);
         Destroy(initialSpectrumTextures);
         Destroy(spectrumTextures);
         Destroy(pingPongTex);

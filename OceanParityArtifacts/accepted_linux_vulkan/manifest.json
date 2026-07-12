@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "target": "Water/Assets/Scenes/SampleScene.unity",
+  "unity_version": "2023.2.2f1",
+  "resolution": [2592, 1355],
+  "aspect_ratio": "2592:1355",
+  "fixed_timestep_seconds": 0.016666666666666666,
+  "times_seconds": [0, 1, 10, 50, 100, 199.9, 200, 200.1],
+  "camera": {
+    "projection": "perspective",
+    "vertical_fov_degrees": 75,
+    "unity_position": [2.626, 9.626, -18.47],
+    "unity_rotation_degrees": [10.546, 5.873, 0],
+    "near": 0.05,
+    "far": 1000,
+    "path": "static"
+  },
+  "godot_camera": {
+    "approved_position": [34.626, 13.626, -18.47],
+    "approved_rotation_degrees": [-10.546, 5.873, 0],
+    "vertical_fov_degrees": 75,
+    "near": 0.05,
+    "far": 1000,
+    "approved_resolution": [2592, 1355]
+  },
+  "sun": {
+    "unity_euler_degrees": [50, -30, 0],
+    "unity_rotation_quaternion": [0.40821788, -0.23456968, 0.10938163, 0.8754261],
+    "color_linear": [1, 0.99874437, 0.98],
+    "intensity": 1
+  },
+  "pipeline": {
+    "unity_color_space": "Linear",
+    "camera_hdr": true,
+    "camera_msaa": true,
+    "rendering_path": "Forward",
+    "tone_mapper": "none recorded (built-in pipeline)",
+    "exposure": "camera physical properties serialized but physical camera is not enabled",
+    "graphics_api": "record at capture time",
+    "scene_environment_guid": "6fa3f446deee84c52aec507bd0aca28c",
+    "scene_environment_asset_status": "missing from repository",
+    "accepted_environment_substitute": "runtime procedural TillDawnSubstituteEnvironment cubemap",
+    "accepted_reference_backend": "Linux Vulkan Custom/FFTWaterCompat"
+  },
+  "views": {
+    "band_0": "fft",
+    "band_1": "fft",
+    "band_2": "fft",
+    "band_3": "fft",
+    "displacement": "foundation",
+    "vertical_height": "foundation",
+    "horizontal_displacement": "fft",
+    "slopes": "fft",
+    "jacobian": "fft",
+    "raw_foam": "foundation",
+    "final_foam": "foundation",
+    "specular": "fft",
+    "fresnel_environment": "fft",
+    "scatter": "fft",
+    "final": "foundation"
+  },
+  "comparison": {
+    "histogram_bins": 64,
+    "foam_threshold": 0.5,
+    "edge_threshold": 0.08,
+    "required_metrics": [
+      "luminance_histogram_l1", "ssim", "edge_difference", "foam_coverage",
+      "slope_rms", "height_rms", "dominant_wave_direction_degrees", "temporal_difference_energy"
+    ]
+  },
+  "artifact_root": "${TILLDAWN_OCEAN_PARITY_ROOT:-user://ocean_parity}; large PNG/EXR captures are not committed"
+}

@@ -11,6 +11,7 @@
 Texture2D<float2> _PingTex;
 RWTexture2DArray<float4> _SpectrumTextures, _InitialSpectrumTextures, _DisplacementTextures;
 RWTexture2DArray<float2> _SlopeTextures;
+RWTexture2DArray<float> _JacobianTextures;
 RWTexture2D<half> _BuoyancyData;
 
 float _FrameTime, _DeltaTime, _A, _Gravity, _RepeatTime, _Damping, _Depth, _LowCutoff, _HighCutoff;
@@ -331,6 +332,9 @@ void CS_AssembleMaps(uint3 id : SV_DISPATCHTHREADID) {
 
         _DisplacementTextures[uint3(id.xy, i)] = float4(displacement, foam);
         _SlopeTextures[uint3(id.xy, i)] = float2(slopes);
+        // Retained parity diagnostic. The production foam path consumes Jacobian immediately;
+        // keeping it in a separate RHalf array does not alter displacement or accumulation.
+        _JacobianTextures[uint3(id.xy, i)] = jacobian;
 
         if (i == 0) {
             _BuoyancyData[id.xy] = displacement.y;
