@@ -7,6 +7,10 @@ using UnityEngine.Rendering;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class FFTWater : MonoBehaviour {
+    // Till Dawn Phase-2 parity instrumentation. These overrides are inactive during normal play.
+    public static bool ParitySuppressAutomaticUpdate;
+    public static float? ParityFrameTime;
+    public static float? ParityDeltaTime;
     public Shader waterShader;
     public ComputeShader fftComputeShader;
 
@@ -325,8 +329,8 @@ public class FFTWater : MonoBehaviour {
 
     void SetFFTUniforms() {
         fftComputeShader.SetVector("_Lambda", lambda);
-        fftComputeShader.SetFloat("_FrameTime", Time.time * speed);
-        fftComputeShader.SetFloat("_DeltaTime", Time.deltaTime);
+        fftComputeShader.SetFloat("_FrameTime", (ParityFrameTime ?? Time.time) * speed);
+        fftComputeShader.SetFloat("_DeltaTime", ParityDeltaTime ?? Time.deltaTime);
         fftComputeShader.SetFloat("_Gravity", gravity);
         fftComputeShader.SetFloat("_RepeatTime", repeatTime);
         fftComputeShader.SetInt("_N", N);
@@ -449,6 +453,7 @@ public class FFTWater : MonoBehaviour {
     }
 
     void Update() {
+        if (ParitySuppressAutomaticUpdate) return;
         waterMaterial.SetVector("_Ambient", ambient);
         waterMaterial.SetVector("_DiffuseReflectance", diffuseReflectance);
         waterMaterial.SetVector("_SpecularReflectance", specularReflectance);
@@ -546,6 +551,17 @@ public class FFTWater : MonoBehaviour {
         Matrix4x4 projMatrix = GL.GetGPUProjectionMatrix(cam.projectionMatrix, false);
         Matrix4x4 viewProjMatrix = projMatrix * cam.worldToCameraMatrix;
         waterMaterial.SetMatrix("_CameraInvViewProjection", viewProjMatrix.inverse);
+    }
+
+    // Retained capture hook: advances the exact production dispatch sequence without changing
+    // serialized component values or relying on editor wall-clock time.
+    public void ParityStep(float time, float deltaTime) {
+        ParityFrameTime = time;
+        ParityDeltaTime = deltaTime;
+        bool suppressed = ParitySuppressAutomaticUpdate;
+        ParitySuppressAutomaticUpdate = false;
+        Update();
+        ParitySuppressAutomaticUpdate = suppressed;
     }
 
     void OnDisable() {

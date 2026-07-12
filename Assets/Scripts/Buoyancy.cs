@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.Rendering;
-using static Unity.Mathematics.math;
 using Unity.Collections;
 using System.Collections;
 using System.Collections.Generic;
@@ -92,8 +91,8 @@ public class Buoyancy : MonoBehaviour {
                 Vector2 pos = new Vector2(worldPos.x, worldPos.z);
                 Vector2 uv = worldPos * waterSource.tile1;
 
-                int x = Mathf.FloorToInt(frac(uv.x) * 1023);
-                int y = Mathf.FloorToInt(frac(uv.y) * 1023);
+                int x = Mathf.FloorToInt(Mathf.Repeat(uv.x, 1.0f) * 1023);
+                int y = Mathf.FloorToInt(Mathf.Repeat(uv.y, 1.0f) * 1023);
 
                 voxelWaterRequest = AsyncGPUReadback.Request(waterSource.GetBuoyancyData(), 0, x, 1, y, 1, 0, 1, null);
             }
